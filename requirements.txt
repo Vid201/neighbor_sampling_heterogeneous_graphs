@@ -1,0 +1,9 @@
+numpy
+tqdm
+torch
+pytorch
+pytorch-lightning
+torch-scatter
+torch-sparse
+torch-geometric
+ogb

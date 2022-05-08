@@ -1,0 +1,21 @@
+common:
+  seed: 42
+  device: 6
+
+runimp:
+  batch_size: 1024
+  in_memory: True
+  epochs: 200
+  dropout: 0.5
+  hidden_channels: 1024
+
+mag240m:
+  root: '/lfs/hyperturing2/0/vid/mag240m'
+
+  heterogenous_neighbor_sampler:
+    original:
+      paper_paper: [25,  15]
+      paper_author: [10, 10]
+      author_paper: [10, 10]
+      author_institution: [5, 5]
+      institution_author: [5, 5]

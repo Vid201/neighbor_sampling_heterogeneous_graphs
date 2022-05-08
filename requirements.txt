@@ -7,3 +7,5 @@ torch-scatter
 torch-sparse
 torch-geometric
 ogb
+torchmetrics
+pyyaml

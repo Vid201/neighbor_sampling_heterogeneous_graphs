@@ -1,6 +1,6 @@
 common:
   seed: 42
-  device: 6
+  device: 7
 
 runimp:
   batch_size: 1024
@@ -10,7 +10,7 @@ runimp:
   hidden_channels: 1024
 
 mag240m:
-  root: '/lfs/hyperturing2/0/vid/mag240m'
+  root: '/lfs/hyperturing1/0/vid/mag240m'
 
   heterogenous_neighbor_sampler:
     original:

@@ -1,7 +1,7 @@
 import os.path as osp
 from typing import Dict, Tuple, List, Optional
 import time
-import tqdm
+from tqdm import tqdm
 import numpy as np
 import torch
 from torch_sparse import SparseTensor
@@ -90,58 +90,60 @@ class MAG240M(LightningDataModule):
             torch.save(full_adj_t, path)
             print(f'Done! [{time.perf_counter() - t:.2f}s]')
         
-        path = f'{dataset.dir}/full_feat.npy'
-        done_flag_path = f'{dataset.dir}/full_feat_done.txt'
-        if not osp.exists(done_flag_path):
-            t = time.perf_counter()
-            print('Generating full feature matrix...')
+        # IGNORE: features are already preprocessed with PCA
+        
+        # path = f'{dataset.dir}/full_feat.npy'
+        # done_flag_path = f'{dataset.dir}/full_feat_done.txt'
+        # if not osp.exists(done_flag_path):
+        #     t = time.perf_counter()
+        #     print('Generating full feature matrix...')
             
-            node_chunk_size = 100000
-            dim_chunk_size = 64
-            N = (dataset.num_papers + dataset.num_authors + dataset.num_institutions)
+        #     node_chunk_size = 100000
+        #     dim_chunk_size = 64
+        #     N = (dataset.num_papers + dataset.num_authors + dataset.num_institutions)
             
-            paper_feat = dataset.paper_feat
-            x = np.memmap(path, dtype=np.float16, mode='w+', shape=(N, self.num_features))
+        #     paper_feat = dataset.paper_feat
+        #     x = np.memmap(path, dtype=np.float16, mode='w+', shape=(N, self.num_features))
             
-            print('Copying paper features...')
-            for i in tqdm(range(0, dataset.num_papers, node_chunk_size)):
-                j = min(i + node_chunk_size, dataset.num_papers)
-                x[i:j] = paper_feat[i:j]
+        #     print('Copying paper features...')
+        #     for i in tqdm(range(0, dataset.num_papers, node_chunk_size)):
+        #         j = min(i + node_chunk_size, dataset.num_papers)
+        #         x[i:j] = paper_feat[i:j]
                 
-            edge_index = dataset.edge_index('author', 'writes', 'paper') # ask if connection strength is actually 16 authors for shared two papers of interest (as it is said in the article)
-            row, col = torch.from_numpy(edge_index)
-            adj_t = SparseTensor(row=row, col=col, sparse_sizes=(dataset.num_authors, dataset.num_papers), is_sorted=True) # sorted probably because number of nodes is very big and sparse tensor operations are faster (matmul ...)
+        #     edge_index = dataset.edge_index('author', 'writes', 'paper') # ask if connection strength is actually 16 authors for shared two papers of interest (as it is said in the article)
+        #     row, col = torch.from_numpy(edge_index)
+        #     adj_t = SparseTensor(row=row, col=col, sparse_sizes=(dataset.num_authors, dataset.num_papers), is_sorted=True) # sorted probably because number of nodes is very big and sparse tensor operations are faster (matmul ...)
             
-            print('Generating author features...')
-            for i in tqdm(range(0, self.num_features, dim_chunk_size)):
-                j = min(i + dim_chunk_size, self.num_features)
-                inputs = get_col_slice(paper_feat, start_row_idx=0, end_row_idx=dataset.num_papers, start_col_idx=i, end_col_idx=j)
-                inputs = torch.from_numpy(inputs)
-                outputs = adj_t.matmul(inputs, reduce='mean').numpy()
-                del inputs
-                save_col_slice(x_src=outputs, x_dst=x, start_row_idx=dataset.num_papers, end_row_idx=dataset.num_papers + dataset.num_authors, start_col_idx=i, end_col_idx=j)
-                del outputs
+        #     print('Generating author features...')
+        #     for i in tqdm(range(0, self.num_features, dim_chunk_size)):
+        #         j = min(i + dim_chunk_size, self.num_features)
+        #         inputs = get_col_slice(paper_feat, start_row_idx=0, end_row_idx=dataset.num_papers, start_col_idx=i, end_col_idx=j)
+        #         inputs = torch.from_numpy(inputs)
+        #         outputs = adj_t.matmul(inputs, reduce='mean').numpy()
+        #         del inputs
+        #         save_col_slice(x_src=outputs, x_dst=x, start_row_idx=dataset.num_papers, end_row_idx=dataset.num_papers + dataset.num_authors, start_col_idx=i, end_col_idx=j)
+        #         del outputs
                 
-            edge_index = dataset.edge_index('author', 'institution')
-            row, col = torch.from_numpy(edge_index)
-            adj_t = SparseTensor(row=col, col=row, sparse_sizes=(dataset.num_institutions, dataset.num_authors), is_sorted=False) # no need to sort the sparse tensor - number of institutions is not big
+        #     edge_index = dataset.edge_index('author', 'institution')
+        #     row, col = torch.from_numpy(edge_index)
+        #     adj_t = SparseTensor(row=col, col=row, sparse_sizes=(dataset.num_institutions, dataset.num_authors), is_sorted=False) # no need to sort the sparse tensor - number of institutions is not big
             
-            print('Generating institution features...')
-            for i in tqdm(range(0, self.num_features, dim_chunk_size)):
-                j = min(i + dim_chunk_size, self.num_features)
-                inputs = get_col_slice(x, start_row_idx=dataset.num_papers, end_row_idx=dataset.num_papers + dataset.num_authors, start_col_idx=i, end_col_idx=j)
-                inputs = torch.from_numpy(inputs)
-                outputs = adj_t.matmul(inputs, reduce='mean').numpy()
-                del inputs
-                save_col_slice(x_src=outputs, x_dst=x, start_row_idx=dataset.num_papers + dataset.num_authors, end_row_idx=N, start_col_idx=i, end_col_idx=j)
-                del outputs
+        #     print('Generating institution features...')
+        #     for i in tqdm(range(0, self.num_features, dim_chunk_size)):
+        #         j = min(i + dim_chunk_size, self.num_features)
+        #         inputs = get_col_slice(x, start_row_idx=dataset.num_papers, end_row_idx=dataset.num_papers + dataset.num_authors, start_col_idx=i, end_col_idx=j)
+        #         inputs = torch.from_numpy(inputs)
+        #         outputs = adj_t.matmul(inputs, reduce='mean').numpy()
+        #         del inputs
+        #         save_col_slice(x_src=outputs, x_dst=x, start_row_idx=dataset.num_papers + dataset.num_authors, end_row_idx=N, start_col_idx=i, end_col_idx=j)
+        #         del outputs
             
-            x.flush()
-            del x
-            print(f'Done! [{time.perf_counter() - t:.2f}s]')
+        #     x.flush()
+        #     del x
+        #     print(f'Done! [{time.perf_counter() - t:.2f}s]')
             
-            with open(done_flag_path, 'w') as f:
-                f.write('done')
+        #     with open(done_flag_path, 'w') as f:
+        #         f.write('done')
                 
         path = f'{dataset.dir}/all_feat_year.npy'
         done_flag_path = f'{dataset.dir}/all_feat_year_done.txt'

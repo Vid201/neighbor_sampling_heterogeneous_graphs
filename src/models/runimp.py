@@ -2,6 +2,7 @@ from typing import List
 import torch
 from torch import Tensor
 from torch.nn import ModuleList, Embedding, Sequential, Linear, BatchNorm1d, ReLU, Dropout
+import torch.nn.functional as F
 from torch.optim.lr_scheduler import StepLR
 from pytorch_lightning import LightningModule
 from torch_geometric.nn import GATConv
@@ -113,18 +114,21 @@ class RUNIMP(LightningModule):
         y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.pos, batch.adjs_t)
         train_loss = F.cross_entropy(y_hat, batch.y)
         self.train_acc(y_hat.softmax(dim=-1), batch.y)
-        self.log('train_acc', self.train_acc, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('train_acc', self.train_acc, prog_bar=True, on_step=False, on_epoch=True, batch_size=batch.x.shape[0])
+        self.log('train_loss', train_loss, prog_bar=True, on_step=False, on_epoch=True, batch_size=batch.x.shape[0])
         return train_loss
     
     def validation_step(self, batch, batch_idx: int):
         y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.pos, batch.adjs_t)
+        val_loss = F.cross_entropy(y_hat, batch.y)
         self.val_acc(y_hat.softmax(dim=-1), batch.y)
-        self.log('val_acc', self.val_acc, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log('val_acc', self.val_acc, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=batch.x.shape[0])
+        self.log('val_loss', val_loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=batch.x.shape[0])
         
     def test_step(self, batch, batch_idx: int):
         y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.pos, batch.adjs_t)
         self.test_acc(y_hat.softmax(dim=-1), batch.y)
-        self.log('test_acc', self.test_acc, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log('test_acc', self.test_acc, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=batch.x.shape[0])
     
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)

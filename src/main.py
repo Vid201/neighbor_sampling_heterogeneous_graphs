@@ -1,8 +1,11 @@
 import argparse
-from random import choices
+import time
+import os
+import os.path as osp
 import yaml
 import torch
-from pytorch_lightning import seed_everything
+from pytorch_lightning import seed_everything, Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 from mag240m import MAG240M
 from models.runimp import RUNIMP
 
@@ -28,10 +31,20 @@ if __name__ == '__main__':
     if args.dataset == 'mag240m':
         datamodule = MAG240M(config[args.dataset]['root'], config[args.model]['batch_size'], sizes, config[args.model]['in_memory'])
 
-    print(datamodule.num_features)
-    
-    # if args.model == 'runimp':
-    #     model = RUNIMP(args.model, datamodule.num_features, )
+    if args.mode == 'train':
+        if args.model == 'runimp':
+            model = RUNIMP(args.model, datamodule.num_features, datamodule.num_classes, config[args.model]['hidden_channels'], datamodule.num_relations, num_layers=len(sizes[('paper', 'paper')]), dropout=config[args.model]['dropout'])
 
+        print(f'#Params {sum([p.numel() for p in model.parameters()])}')
 
+        checkpoint_callback = ModelCheckpoint(monitor='val_acc', mode='max', save_top_k=1)
+        
+        log_dir = f'../logs/{args.model}'
+        if not osp.exists(f'{log_dir}/lightning_logs'):
+            os.makedirs(f'{log_dir}/lightning_logs')
 
+        trainer = Trainer(accelerator='gpu', devices=[config['common']['device']], max_epochs=config[args.model]['epochs'], callbacks=[checkpoint_callback], default_root_dir=log_dir)
+        t = time.perf_counter()
+        trainer.fit(model, datamodule=datamodule)
+        
+        print(f'Done! [{time.perf_counter() - t:.2f}s]')

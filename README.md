@@ -10,6 +10,12 @@
 1. Implement 2/3 more algorithms and run them
 1. Run pipeline again (possible hyperparameter optimization)
 
+## Environments
+
+Graph neural networks: mag240m
+
+Heterogeneous random walks: pytorch
+
 ## Screen
 1. Run krbscreen (detach from screen after that).
 

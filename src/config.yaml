@@ -1,6 +1,6 @@
 common:
   seed: 42
-  device: 7
+  device: 9
 
 runimp:
   batch_size: 1024
@@ -9,13 +9,30 @@ runimp:
   dropout: 0.5
   hidden_channels: 1024
 
+runimp_option1:
+  batch_size: 1024
+  in_memory: True
+  epochs: 100
+  dropout: 0.5
+  hidden_channels: 1024
+
 mag240m:
-  root: '/lfs/hyperturing1/0/vid/mag240m'
+  root: '/lfs/hyperturing2/0/vid/mag240m'
 
   heterogenous_neighbor_sampler:
     original:
-      paper_paper: [25,  15]
-      paper_author: [10, 10]
-      author_paper: [10, 10]
-      author_institution: [5, 5]
-      institution_author: [5, 5]
+      sizes:
+        paper_paper: [25,  15]
+        paper_author: [10, 10]
+        author_paper: [10, 10]
+        author_institution: [5, 5]
+        institution_author: [5, 5]
+    
+    option1:
+      sampling_budget: [35, 40]
+      sizes: # this is calculated
+        paper_paper: [0.36789479,  0.36789479]
+        paper_author: [0.31105315, 0.31105315]
+        author_paper: [0.31105315, 0.31105315]
+        author_institution: [0.00499946, 0.00499946]
+        institution_author: [0.00499946, 0.00499946]

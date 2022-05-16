@@ -2,13 +2,9 @@
 
 # TODO
 
-1. Copy and format project
-1. Setup pipeline
-1. Run the hyperparameter algorithm
-1. Run pipeline
-1. Check results
-1. Implement 2/3 more algorithms and run them
-1. Run pipeline again (possible hyperparameter optimization)
+1. Run runimp and option1 for random walks (graph neural network)
+1. Set random walks to try differnet options
+1. implement option2 and option3 - can be all random walks based
 
 ## Environments
 

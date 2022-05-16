@@ -252,10 +252,10 @@ class MAG240M(LightningDataModule):
         return HeterogeneousNeighborSampler(self.edge_index_dict, sizes_dict=self.sizes_dict, node_idx=self.val_idx, return_e_id=False, transform=self.convert_batch, batch_size=self.batch_size, num_workers=2)
     
     def test_dataloader(self):
-        return HeterogeneousNeighborSampler(self.edge_index_dict, sizes_dict=self.sizes_dict, node_idx=self.val_idx, return_e_id=False, transform=self.convert_batch, batch_size=self.batch_size, num_workers=2)
+        return HeterogeneousNeighborSampler(self.edge_index_dict, sizes_dict=self.sizes_dict, node_idx=self.val_idx, return_e_id=False, transform=self.convert_batch, batch_size=self.batch_size, num_workers=4)
     
     def hidden_test_dataloader(self):
-        return HeterogeneousNeighborSampler(self.edge_index_dict, sizes_dict=self.sizes_dict, node_idx=self.test_idx, return_e_id=False, transform=self.convert_batch, batch_size=self.batch_size, num_workers=3)
+        return HeterogeneousNeighborSampler(self.edge_index_dict, sizes_dict=self.sizes_dict, node_idx=self.test_idx, return_e_id=False, transform=self.convert_batch, batch_size=self.batch_size, num_workers=4)
     
     def convert_batch(self, batch_size, n_id, adjs):
         t = time.perf_counter()

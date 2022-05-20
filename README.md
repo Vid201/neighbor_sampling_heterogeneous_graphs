@@ -2,9 +2,9 @@
 
 # TODO
 
-1. Run runimp and option1 for random walks (graph neural network)
 1. Set random walks to try differnet options
 1. implement option2 and option3 - can be all random walks based
+1. run experiments with new options
 
 ## Environments
 
@@ -28,3 +28,8 @@ Heterogeneous random walks: pytorch
 4. Detach from screen.
 
 `ctrl+a+d`
+
+## Notes
+
+- in master, compare different neighbor sizes (kar sprememba ce vzames 1 paper manj), number of random walks used to calculate hyperparameters, walk lengths
+- compare different options for random walks

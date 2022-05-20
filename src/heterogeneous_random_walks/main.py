@@ -84,6 +84,7 @@ if __name__ == '__main__':
         path2 = '/lfs/rambo/1/vid/mag240m/mag240m_kddcup2021/col_dict.p'
         path3 = '/lfs/rambo/1/vid/mag240m/mag240m_kddcup2021/train_idx.p'
 
+        # note: different Python env
         # if not osp.exists(path):
         #     dataset = MAG240MDataset(root)
 

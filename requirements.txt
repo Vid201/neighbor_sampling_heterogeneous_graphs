@@ -9,3 +9,4 @@ torch-geometric
 ogb
 torchmetrics
 pyyaml
+notebook

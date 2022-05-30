@@ -7,7 +7,7 @@ class Batch(NamedTuple):
     y: Tensor
     sub_y: Tensor
     sub_y_idx: Tensor
-    pos: Tensor
+    pos: Optional[Tensor]
     adjs_t: List[SparseTensor]
     
     def to(self, *args, **kwargs):
@@ -16,7 +16,7 @@ class Batch(NamedTuple):
             y=self.y.to(*args, **kwargs),
             sub_y=self.sub_y.to(*args, **kwargs),
             sub_y_idx=self.sub_y_idx.to(*args, **kwargs),
-            pos=self.pos.to(*args, **kwargs),
+            pos=self.pos.to(*args, **kwargs) if self.pos is not None else None,
             adjs_t=[adj_t.to(*args, **kwargs) for adj_t in self.adjs_t]
         )
 

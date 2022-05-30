@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import torch
 from torch import Tensor
 from torch.nn import ModuleList, Embedding, Sequential, Linear, BatchNorm1d, ReLU, Dropout
@@ -7,10 +7,10 @@ from torch.optim.lr_scheduler import StepLR
 from pytorch_lightning import LightningModule
 from torch_geometric.nn import GATConv
 from torch_sparse import SparseTensor
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, F1Score
 
 class RUNIMP(LightningModule):
-    def __init__(self, model: str, in_channels: int, out_channels: int, hidden_channels: int, num_relations: int, num_layers: int, heads: int = 4, dropout: float = 0.5, attn_dropout: float = 0.6):
+    def __init__(self, model: str, in_channels: int, out_channels: int, hidden_channels: int, num_relations: int, num_layers: int, heads: int = 4, dropout: float = 0.5, attn_dropout: float = 0.6, metric: str = 'acc'):
         super().__init__()
         self.save_hyperparameters()
         self.model = model.lower()
@@ -62,16 +62,29 @@ class RUNIMP(LightningModule):
             Dropout(p=self.dropout),
             Linear(hidden_channels, out_channels)
         )
-        
-        self.train_acc = Accuracy()
-        self.val_acc = Accuracy()
-        self.test_acc = Accuracy()
-        
-    def forward(self, x: Tensor, y: Tensor, y_idx: Tensor, pos: Tensor, adjs_t: List[SparseTensor]) -> Tensor:
+
+        self.metric = metric
+
+        if metric == 'acc':
+            self.train_metric = Accuracy()
+            self.val_metric = Accuracy()
+            self.test_metric = Accuracy()
+        elif metric == 'micro_f1':
+            self.train_metric = F1Score(num_classes=out_channels, average='micro')
+            self.val_metric = F1Score(num_classes=out_channels, average='micro')
+            self.test_metric = F1Score(num_classes=out_channels, average='micro')
+        elif metric == 'macro_f1':
+            self.train_metric = F1Score(num_classes=out_channels, average='macro')
+            self.val_metric = F1Score(num_classes=out_channels, average='macro')
+            self.test_metric = F1Score(num_classes=out_channels, average='macro')
+
+
+    def forward(self, x: Tensor, y: Tensor, y_idx: Tensor, adjs_t: List[SparseTensor], pos: Optional[Tensor] = None) -> Tensor:
         # m2v_out = self.in_drop(self.m2v_emb(m2v))
         # x = x + m2v_out
         
-        x += pos
+        if pos is not None:
+            x += pos
         
         if torch.numel(y_idx) > 0:
             y_out = torch.squeeze(self.in_drop(self.label_emb(y.view(-1, 1))))
@@ -94,6 +107,7 @@ class RUNIMP(LightningModule):
                 if edge_type.sum() > 0:
                     subadj_t = adj_t.masked_select_nnz(edge_type, layout='coo')
                     if subadj_t.nnz() > 0:
+                        subadj_t = subadj_t.set_value(None, layout=None)
                         feature_x = self.convs[i][j]((x, x_target), subadj_t)
                         feature_x = self.norms[i][j+1](feature_x)
                         feature_x = F.elu(feature_x)
@@ -111,24 +125,24 @@ class RUNIMP(LightningModule):
         return out
                               
     def training_step(self, batch, batch_idx: int):
-        y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.pos, batch.adjs_t)
+        y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.adjs_t, batch.pos)
         train_loss = F.cross_entropy(y_hat, batch.y)
-        self.train_acc(y_hat.softmax(dim=-1), batch.y)
-        self.log('train_acc', self.train_acc, prog_bar=True, on_step=False, on_epoch=True, batch_size=batch.x.shape[0])
+        self.train_metric(y_hat.softmax(dim=-1), batch.y)
+        self.log(f'train_{self.metric}', self.train_metric, prog_bar=True, on_step=False, on_epoch=True, batch_size=batch.x.shape[0])
         self.log('train_loss', train_loss, prog_bar=True, on_step=False, on_epoch=True, batch_size=batch.x.shape[0])
         return train_loss
     
     def validation_step(self, batch, batch_idx: int):
-        y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.pos, batch.adjs_t)
+        y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.adjs_t, batch.pos)
         val_loss = F.cross_entropy(y_hat, batch.y)
-        self.val_acc(y_hat.softmax(dim=-1), batch.y)
-        self.log('val_acc', self.val_acc, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=batch.x.shape[0])
+        self.val_metric(y_hat.softmax(dim=-1), batch.y)
+        self.log(f'val_{self.metric}', self.val_metric, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=batch.x.shape[0])
         self.log('val_loss', val_loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=batch.x.shape[0])
         
     def test_step(self, batch, batch_idx: int):
-        y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.pos, batch.adjs_t)
-        self.test_acc(y_hat.softmax(dim=-1), batch.y)
-        self.log('test_acc', self.test_acc, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=batch.x.shape[0])
+        y_hat = self(batch.x, batch.sub_y, batch.sub_y_idx, batch.adjs_t, batch.pos)
+        self.test_metric(y_hat.softmax(dim=-1), batch.y)
+        self.log(f'test_{self.metric}', self.test_metric, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=batch.x.shape[0])
     
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)

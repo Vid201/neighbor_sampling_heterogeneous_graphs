@@ -23,6 +23,7 @@ class Freebase(LightningDataModule):
     @property
     def num_features(self) -> int:
         return 8
+        # return 1 
     
     @property
     def num_classes(self) -> int:
@@ -75,8 +76,12 @@ class Freebase(LightningDataModule):
         N = sum([dataset[node_type].num_nodes for node_type in dataset.node_types])
         self.num_nodes = N
 
+        # one-hot encoding as node features
         x = np.repeat(np.arange(self.num_features), [dataset[node_type].num_nodes for node_type in dataset.node_types])
         self.x = F.one_hot(torch.from_numpy(x), num_classes=self.num_features)
+
+        # node id as node features
+        # self.x = torch.from_numpy(np.arange(dataset.num_nodes).reshape(dataset.num_nodes, 1))
 
         self.y = dataset['book'].y.double()
         y_random_mask = (self.y.isnan()) | (self.y == -1)

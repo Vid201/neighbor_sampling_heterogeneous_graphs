@@ -46,7 +46,7 @@ freebase:
   heterogeneous_neighbor_sampler:
     # this is homogeneous neighbor sampler - benchmark
     original:
-      sampling_budget: [75, 100]
+      sampling_budget: [-1, -1]
 
     option1:
       sampling_budget: [75, 100]

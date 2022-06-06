@@ -24,6 +24,10 @@ class RUNIMP(LightningModule):
         self.skips = ModuleList()
         self.path_attns = ModuleList()
         self.path_norms = ModuleList()
+
+        if in_channels == 1:
+            in_channels = 64
+            self.x_lin = Linear(1, in_channels)
         
         self.label_emb = Embedding(out_channels, in_channels)
         # self.m2v_emb = Linear(64, in_channels)
@@ -80,6 +84,9 @@ class RUNIMP(LightningModule):
 
 
     def forward(self, x: Tensor, y: Tensor, y_idx: Tensor, adjs_t: List[SparseTensor], pos: Optional[Tensor] = None) -> Tensor:
+        if x.shape[1] == 1:
+            x = self.x_lin(x)
+
         # m2v_out = self.in_drop(self.m2v_emb(m2v))
         # x = x + m2v_out
         

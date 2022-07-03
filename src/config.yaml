@@ -1,6 +1,6 @@
 common:
   seed: 42
-  device: 8
+  device: 0
 
 runimp:
   batch_size: 1024
@@ -40,13 +40,13 @@ mag240m:
 
 freebase:
   root: '/lfs/hyperturing1/0/vid/freebase'
-  metric: 'micro_f1'
+  metric: 'macro_f1'
   hidden_channels: 256
 
   heterogeneous_neighbor_sampler:
     # this is homogeneous neighbor sampler - benchmark
     original:
-      sampling_budget: [-1, -1]
+      sampling_budget: [75, 100]
 
     option1:
       sampling_budget: [75, 100]

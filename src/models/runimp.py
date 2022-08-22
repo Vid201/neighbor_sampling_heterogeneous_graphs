@@ -16,7 +16,7 @@ class RUNIMP(LightningModule):
         self.model = model.lower()
         self.num_relations = num_relations
         self.dropout = dropout
-        self.attn_dropout = attn_dropout # I think this is the label_rate (masking percentage of labels - used in conv operation)
+        self.attn_dropout = attn_dropout
         self.in_dropout = 0.3
         
         self.convs = ModuleList()
